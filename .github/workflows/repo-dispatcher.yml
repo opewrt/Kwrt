@@ -30,10 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v4.3.0
 
     - name: cancel running workflows
-      uses: styfle/cancel-workflow-action@main
+      uses: styfle/cancel-workflow-action@0.9.1
       if: contains(github.event.inputs.param, 'cw')
       with:
         workflow_id: all

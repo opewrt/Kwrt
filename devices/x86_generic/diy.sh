@@ -4,7 +4,10 @@ SHELL_FOLDER=$(dirname $(readlink -f "$0"))
 
 #bash $SHELL_FOLDER/../common/kernel_6.6.sh
 
-git_clone_path master https://github.com/coolsnowwolf/lede target/linux/x86/files target/linux/x86/patches-6.6
+LEDE_REPO="${LEDE_REPO:-https://github.com/opewrt/lede}"
+LEDE_REF="${LEDE_REF:-19978f14dceb8a3e6e63c8eb1d30e2052738add3}"
+
+git_clone_path "${LEDE_REF}" "${LEDE_REPO}" target/linux/x86/files target/linux/x86/patches-6.6
 
 sed -i 's/DEFAULT_PACKAGES +=/DEFAULT_PACKAGES += kmod-usb-hid kmod-mmc kmod-sdhci usbutils pciutils lm-sensors-detect kmod-alx kmod-vmxnet3 kmod-igbvf kmod-iavf kmod-bnx2x kmod-pcnet32 kmod-tulip kmod-r8125 kmod-r8126 kmod-r8101 kmod-8139cp kmod-8139too kmod-i40e kmod-i40evf kmod-mlx4-core kmod-mlx5-core fdisk lsblk/' target/linux/x86/Makefile
 
@@ -32,4 +35,3 @@ CONFIG_DRM_I915=y
 sed -i "s/DEVICE_MODEL := x86/DEVICE_MODEL := x86\/32/" target/linux/x86/image/generic.mk
 
 sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
-

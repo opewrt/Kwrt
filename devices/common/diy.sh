@@ -2,6 +2,22 @@
 #=================================================
 shopt -s extglob
 
+OPENWRT_PACKAGES_REF="212eb308f108b2460909b3cd25d68374913b266f"
+OPENWRT_LUCI_REF="36b610767adf7172f87e89e02edc1a91af1fcb45"
+OPENWRT_ROUTING_REF="e87b55c6a642947ad7e24cd5054a637df63d5dbe"
+IMMORTALWRT_REF="a5d949fc9e6a7701a155ea1a10eacc130f55e8b7"
+LEDE_REPO="https://github.com/opewrt/lede"
+LEDE_REF="19978f14dceb8a3e6e63c8eb1d30e2052738add3"
+
+OPENWRT_PACKAGES_RAW="https://raw.githubusercontent.com/openwrt/packages/${OPENWRT_PACKAGES_REF}"
+IMMORTALWRT_RAW="https://raw.githubusercontent.com/immortalwrt/immortalwrt/${IMMORTALWRT_REF}"
+LEDE_RAW="https://raw.githubusercontent.com/opewrt/lede/${LEDE_REF}"
+
+sed -i \
+	-e "s#^src-git packages .*#src-git packages https://git.openwrt.org/feed/packages.git^${OPENWRT_PACKAGES_REF}#" \
+	-e "s#^src-git luci .*#src-git luci https://git.openwrt.org/project/luci.git^${OPENWRT_LUCI_REF}#" \
+	-e "s#^src-git routing .*#src-git routing https://git.openwrt.org/feed/routing.git^${OPENWRT_ROUTING_REF}#" \
+	feeds.conf.default
 sed -i '$a src-git kiddin9 https://github.com/opewrt/kwrt-packages.git^f5cbc4bdd62ad549f587e8753e36aa4c307cfb2f' feeds.conf.default
 sed -i "/telephony/d" feeds.conf.default
 
@@ -23,11 +39,11 @@ sed -i -e '/^\/etc\/profile/d' \
         package/base-files/Makefile
 sed -i "s/192.168.1/10.0.0/" package/base-files/files/bin/config_generate
 
-wget -N https://github.com/immortalwrt/immortalwrt/raw/refs/heads/openwrt-24.10/package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch -P package/network/utils/nftables/patches/
-wget -N https://github.com/immortalwrt/immortalwrt/raw/refs/heads/openwrt-24.10/package/network/utils/nftables/patches/001-drop-useless-file.patch -P package/network/utils/nftables/patches/
-wget -N https://github.com/immortalwrt/immortalwrt/raw/refs/heads/openwrt-24.10/package/system/fstools/patches/100-fstools-support-extroot-for-non-MTD-rootfs_data.patch -P package/system/fstools/patches/
-wget -N https://github.com/immortalwrt/immortalwrt/raw/refs/heads/openwrt-24.10/package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch -P package/libs/libnftnl/patches/
-wget -N https://github.com/immortalwrt/immortalwrt/raw/refs/heads/openwrt-24.10/package/firmware/wireless-regdb/patches/600-custom-change-txpower-and-dfs.patch -P package/firmware/wireless-regdb/patches/
+wget -N "${IMMORTALWRT_RAW}/package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch" -P package/network/utils/nftables/patches/
+wget -N "${IMMORTALWRT_RAW}/package/network/utils/nftables/patches/001-drop-useless-file.patch" -P package/network/utils/nftables/patches/
+wget -N "${IMMORTALWRT_RAW}/package/system/fstools/patches/100-fstools-support-extroot-for-non-MTD-rootfs_data.patch" -P package/system/fstools/patches/
+wget -N "${IMMORTALWRT_RAW}/package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch" -P package/libs/libnftnl/patches/
+wget -N "${IMMORTALWRT_RAW}/package/firmware/wireless-regdb/patches/600-custom-change-txpower-and-dfs.patch" -P package/firmware/wireless-regdb/patches/
 
 echo "$(date +"%s")" >version.date
 sed -i '/$(curdir)\/compile:/c\$(curdir)/compile: package/opkg/host/compile' package/Makefile
@@ -41,15 +57,13 @@ sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-de
 
 mv -f feeds/kiddin9/r81* tmp/
 
-wget -N https://raw.githubusercontent.com/openwrt/packages/master/lang/golang/golang/Makefile -P feeds/packages/lang/golang/golang/
+wget -N "${OPENWRT_PACKAGES_RAW}/lang/golang/golang/Makefile" -P feeds/packages/lang/golang/golang/
 
 #sed -i "/call Build\/check-size,\$\$(KERNEL_SIZE)/d" include/image.mk
 
-git_clone_path master https://github.com/coolsnowwolf/lede mv target/linux/generic/hack-6.6
+git_clone_path "${LEDE_REF}" "${LEDE_REPO}" mv target/linux/generic/hack-6.6
 rm -rf target/linux/generic/hack-6.6/929-Revert-genetlink* target/linux/generic/hack-6.6/767-net-phy-realtek-add-led*
-wget -N https://raw.githubusercontent.com/coolsnowwolf/lede/master/target/linux/generic/pending-6.6/613-netfilter_optional_tcp_window_check.patch -P target/linux/generic/pending-6.6/
-
-wget -N https://patch-diff.githubusercontent.com/raw/openwrt/openwrt/pull/16414.patch -P devices/common/patches/
+wget -N "${LEDE_RAW}/target/linux/generic/pending-6.6/613-netfilter_optional_tcp_window_check.patch" -P target/linux/generic/pending-6.6/
 
 sed -i "/mediaurlbase/d" package/feeds/*/luci-theme*/root/etc/uci-defaults/*
 

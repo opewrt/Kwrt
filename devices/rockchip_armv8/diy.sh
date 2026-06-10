@@ -7,18 +7,20 @@ SHELL_FOLDER=$(dirname $(readlink -f "$0"))
 
 rm -rf package/boot target/linux/rockchip target/linux/generic
 
-git_clone_path master https://github.com/coolsnowwolf/lede target/linux/rockchip target/linux/generic package/boot
+LEDE_REPO="${LEDE_REPO:-https://github.com/opewrt/lede}"
+LEDE_REF="${LEDE_REF:-19978f14dceb8a3e6e63c8eb1d30e2052738add3}"
+LEDE_RAW="${LEDE_RAW:-https://raw.githubusercontent.com/opewrt/lede/${LEDE_REF}}"
+
+git_clone_path "${LEDE_REF}" "${LEDE_REPO}" target/linux/rockchip target/linux/generic package/boot
 
 wget -N https://github.com/istoreos/istoreos/raw/istoreos-22.03/target/linux/rockchip/patches-5.10/305-r2s-pwm-fan.patch -P target/linux/rockchip/patches-6.6/
 wget -N https://github.com/openwrt/openwrt/raw/refs/heads/openwrt-24.10/target/linux/rockchip/Makefile -P target/linux/rockchip/
 
-wget -N https://github.com/coolsnowwolf/lede/raw/master/include/kernel-6.6 -P include/
+wget -N "${LEDE_RAW}/include/kernel-6.6" -P include/
 
-wget -N https://github.com/coolsnowwolf/lede/raw/refs/heads/master/include/trusted-firmware-a.mk -P include/
+wget -N "${LEDE_RAW}/include/trusted-firmware-a.mk" -P include/
 
 sed -i "/KernelPackage,ptp/d" package/kernel/linux/modules/other.mk
-
-wget -N https://patch-diff.githubusercontent.com/raw/openwrt/openwrt/pull/16414.patch -P devices/common/patches/
 
 #sed -i -e "s/configs\/dilusense-\(.*-.*_defconfig\)/configs\/\1/" \
 #	   -e "s/configs\/sharevdi-\(.*-.*_defconfig\)/configs\/\1/" \
