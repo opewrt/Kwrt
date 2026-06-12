@@ -16,12 +16,10 @@
  				br2684ctl:  access('/usr/sbin/br2684ctl') == true,
  				swconfig:   access('/sbin/swconfig') == true,
  				odhcpd:     access('/usr/sbin/odhcpd') == true,
-@@ -538,6 +540,99 @@ const methods = {
- 		call: function() {
- 			return { result: process_list() };
+@@ -544,6 +546,99 @@ const methods = {
  		}
-+	},
-+
+ 	},
+ 
 +	getCPUBench: {
 +		call: function() {
 +			return { cpubench: readfile('/etc/bench.log') || '' };
@@ -113,8 +111,11 @@
 +				return { onlineusers: error() };
 +			}
 +		}
- 	}
- };
++	},
++
+ 	getBuiltinEthernetPorts: {
+ 		call: function() {
+ 			let fd = open('/etc/board.json', 'r');
  
 
 --- a/package/feeds/luci/luci-base/htdocs/luci-static/resources/network.js
