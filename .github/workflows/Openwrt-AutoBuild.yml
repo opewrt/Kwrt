@@ -24,8 +24,11 @@ on:
     tags:
       - 'kwrt-fullbuild-x86_64-*'
 
+permissions:
+  contents: write
+  actions: write
+
 env:
-  REPO_TOKEN: ${{ secrets.TOKEN_KIDDIN9 }}
   PPPOE_USERNAME: ${{ secrets.PPPOE_USERNAME }}
   PPPOE_PASSWD: ${{ secrets.PPPOE_PASSWD }}
   SCKEY: ${{ secrets.SCKEY }}
@@ -77,7 +80,6 @@ jobs:
         echo "UPLOAD_FIRMWARE_FOR_RELEASE=${UPLOAD_FIRMWARE_FOR_RELEASE}" >> $GITHUB_ENV
         echo "UPLOAD_FIRMWARE_TO_COWTRANSFER=${UPLOAD_FIRMWARE_TO_COWTRANSFER}" >> $GITHUB_ENV
         echo "UPLOAD_FIRMWARE_TO_WETRANSFER=${UPLOAD_FIRMWARE_TO_WETRANSFER}" >> $GITHUB_ENV
-        sed -i "1a REPO_TOKEN=${{ secrets.TOKEN_KIDDIN9 }}" ${GITHUB_WORKSPACE}/devices/common/diy.sh
         sed -i "1a TARGET=${{matrix.target}}" ${GITHUB_WORKSPACE}/devices/common/diy.sh
         if [ ${{matrix.target}} == "x86_64" ]; then
             echo "ARCH=linux/amd64" >> $GITHUB_ENV
@@ -191,6 +193,16 @@ jobs:
         ln -sf /mnt/openwrt/staging_dir openwrt/staging_dir
         ln -sf /mnt/openwrt/build_dir openwrt/build_dir
 
+    - name: Cache OpenWrt downloads
+      uses: actions/cache@v4
+      if: ${{ !contains(github.event.action || github.event.inputs.param || github.ref_name || '', 'nocache') }}
+      with:
+        path: /mnt/openwrt/dl
+        key: openwrt-dl-${{ runner.os }}-${{ matrix.target }}-${{ env.REPO_BRANCH }}-${{ github.sha }}
+        restore-keys: |
+          openwrt-dl-${{ runner.os }}-${{ matrix.target }}-${{ env.REPO_BRANCH }}-
+          openwrt-dl-${{ runner.os }}-${{ matrix.target }}-
+
     - name: Load custom configuration
       run: |
         function git_clone_path() {
@@ -268,7 +280,7 @@ jobs:
         fi
         cat .config
 
-    - name: Cache
+    - name: Cache toolchain and ccache
       uses: stupidloud/cachewrtbuild@b729f807837dbc3455d02fd35192660d9b662121
       with:
         ccache: 'true'
@@ -352,8 +364,7 @@ jobs:
 
     - name: Create release
       id: create_release
-      if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
-      continue-on-error: true
+      if: env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
       run: |
         {
           echo "Kwrt ${{matrix.target}} full build"
@@ -367,16 +378,21 @@ jobs:
           echo "墙内加速下载:"
           echo "[腾讯云](https://dl.openwrt.ai/firmware/${{matrix.target}}/)"
         } >> release.txt
-        [ -n "${WETRANS:-}" ] && echo "[WeTransfer](${WETRANS})" >> release.txt
-        [ -n "${COWURL:-}" ] && echo "[奶牛上传](${COWURL})" >> release.txt
-        [ -n "${NOTICE:-}" ] && echo "${NOTICE}" >> release.txt
+        if [ -n "${WETRANS:-}" ]; then
+          echo "[WeTransfer](${WETRANS})" >> release.txt
+        fi
+        if [ -n "${COWURL:-}" ]; then
+          echo "[奶牛上传](${COWURL})" >> release.txt
+        fi
+        if [ -n "${NOTICE:-}" ]; then
+          echo "${NOTICE}" >> release.txt
+        fi
 
     - name: Upload firmware for release
       uses: softprops/action-gh-release@v2.6.2
-      continue-on-error: true
-      if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
+      if: env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN_KIDDIN9 }}
+        GITHUB_TOKEN: ${{ github.token }}
       with:
         files: "${{ env.RELEASE_ASSETS }}/*"
         name: ${{ env.date2 }} ${{matrix.target}} ${{ env.EMOJI }}
@@ -399,16 +415,6 @@ jobs:
       uses: GitRML/delete-workflow-runs@v1.2.2
       continue-on-error: true
       with:
-        token: ${{ secrets.TOKEN_KIDDIN9 }}
+        token: ${{ github.token }}
         retain_days: 100
         keep_minimum_runs: 0
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.3.4
-      continue-on-error: true
-      if: env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 15
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN_KIDDIN9 }}
