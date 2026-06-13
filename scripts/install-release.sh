@@ -79,6 +79,9 @@ if [ ! -s "$RELEASE_DIR/${TARGET}.diffconfig" ]; then
 	cp -f "$OPENWRT_DIR/kwrt-${TARGET}.diffconfig" "$RELEASE_DIR/${TARGET}.diffconfig" 2>/dev/null || true
 	cp -f "$OPENWRT_DIR/kwrt-x86_64.diffconfig" "$RELEASE_DIR/${TARGET}.diffconfig" 2>/dev/null || true
 fi
+if [ -f "$RELEASE_DIR/${TARGET}.diffconfig" ] && [ ! -s "$RELEASE_DIR/${TARGET}.diffconfig" ]; then
+	rm -f "$RELEASE_DIR/${TARGET}.diffconfig"
+fi
 cp -f "$OPENWRT_DIR/build.log" "$RELEASE_DIR/build.log" 2>/dev/null || true
 
 kernel_cfg="$(find "$OPENWRT_DIR"/build_dir/target-* -path '*/linux-*/.config' -print -quit 2>/dev/null || true)"

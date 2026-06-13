@@ -331,19 +331,6 @@ jobs:
         Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
         echo "EMOJI=${Emoji[$[$RANDOM % ${#Emoji[@]}]]}" >> $GITHUB_ENV
 
-    - name: Deploy imagebuilder to server
-      uses: easingthemes/ssh-deploy@v5.1.1
-      continue-on-error: true
-      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action || github.event.inputs.param || github.ref_name || '', 'noser')
-      with:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        ARGS: "-avzr"
-        SOURCE: openwrt/bin/targets
-        REMOTE_HOST: ${{ secrets.SERVER_HOST }}
-        REMOTE_PORT: ${{ secrets.SERVER_PORT }}
-        REMOTE_USER: root
-        TARGET: "/www/wwwroot/dl.openwrt.ai/releases/tmp/"
-
     # - name: Upload firmware for artifact
     #   uses: actions/upload-artifact@v4.6.2
     #   if: env.UPLOAD_FIRMWARE_FOR_ARTIFACT == 'true'
@@ -374,9 +361,6 @@ jobs:
           echo "- Release tag: ${{ env.RELEASE_TAG }}"
           echo
           echo "Assets include packages and targets archives, direct firmware image, SDK, ImageBuilder, configs, manifests, checksums, and compressed build log."
-          echo
-          echo "墙内加速下载:"
-          echo "[腾讯云](https://dl.openwrt.ai/firmware/${{matrix.target}}/)"
         } >> release.txt
         if [ -n "${WETRANS:-}" ]; then
           echo "[WeTransfer](${WETRANS})" >> release.txt
@@ -409,7 +393,7 @@ jobs:
       if: env.TELEGRAM_TOKEN && ! contains(github.event.action || github.event.inputs.param || github.ref_name || '', 'notg')
       continue-on-error: true
       run: |
-        curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://dl.openwrt.ai/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
+        curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋 ${{ env.COWURL }} ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@v1.2.2

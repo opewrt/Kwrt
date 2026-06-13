@@ -90,6 +90,9 @@ if [ -f "$RELEASE_DIR/build.log" ]; then
 	zstd -T0 -6 -f "$RELEASE_DIR/build.log" -o "$ASSET_DIR/build.log.zst"
 fi
 
+find "$ASSET_DIR" -maxdepth 1 -type f -size 0 -print -delete \
+	| sed 's#^#Skipping empty release asset: #' >&2
+
 (
 	cd "$ASSET_DIR"
 	find . -maxdepth 1 -type f ! -name ASSETS.sha256sums -printf '%P\n' \
